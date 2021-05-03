@@ -28,7 +28,7 @@ maxLengthPadding = 80
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
 model = Subtask2_Model()
-optimizer = tf.keras.optimizers.Adam( learning_rate=0.001)
+optimizer = tf.keras.optimizers.Adam( learning_rate=0.0001)
 
 def get_bert_params(tokens):
     attn_mask = []
@@ -81,12 +81,12 @@ def training(train_data):
         labels = tf.convert_to_tensor(np.array(labels), dtype="float32")
         labels = tf.reshape(labels ,shape=(labels.shape[0],1))
 
-        beforeThreshold = tf.math.subtract(targets,output)
+        # beforeThreshold = tf.math.subtract(targets,output)
         
         result = tf.math.subtract(targets,output)
         squaredError = tf.math.square(result)
         
-        loss = tf.math.divide(tf.math.reduce_sum(squaredError),squaredError.shape[0])
+        loss = tf.math.reduce_mean(tf.math.reduce_sum(squaredError, axis=1))#,squaredError.shape[0])
     
         gradients = tape.gradient(loss, model.trainable_variables)
         optimizer.apply_gradients(zip(gradients, model.trainable_variables))
