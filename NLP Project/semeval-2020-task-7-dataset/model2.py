@@ -28,7 +28,7 @@ maxLengthPadding = 80
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
 model = Subtask2_Model()
-optimizer = tf.keras.optimizers.Adam( learning_rate=0.0001)
+optimizer = tf.keras.optimizers.Adam( learning_rate=0.001)
 
 def get_bert_params(tokens):
     attn_mask = []
@@ -121,9 +121,9 @@ def testing(test_data):
         #     else:
         #         currentVal = 1  
         
-        if(output[0][0]-output[0][1]<-0.05):
+        if(output[0][0]-output[0][1]<-0.0001):
             output = 2
-        elif(output[0][0]-output[0][1]>0.05):
+        elif(output[0][0]-output[0][1]>0.0001):
             output = 1
         else:
             output = 0  
