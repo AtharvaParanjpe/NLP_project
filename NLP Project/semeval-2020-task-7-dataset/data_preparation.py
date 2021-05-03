@@ -5,6 +5,8 @@ from sklearn.utils import shuffle
 
 from transformers import BertTokenizer, TFBertModel,TFBertForSequenceClassification
 
+from itertools import combinations
+
 class DataLoader():
 
     def __init__(self):
@@ -80,9 +82,47 @@ class DataLoader():
         self.test2.to_csv("./subtask-2/modified-test.csv")
         self.dev2.to_csv("./subtask-2/modified-dev.csv")
 
+    def makeCombinationOfEdits(self):
+        #df = pd.read_csv('subtask-1/modified-train.csv')
+        df = pd.read_csv('subtask-1/modified-test.csv')
+
+        final_df = pd.DataFrame()
+        no_combine_df = pd.DataFrame()
+        
+        gk = df.groupby('original')
+        
+        for gname in gk.groups.keys():
+            grouped_df = gk.get_group(gname)
+            
+            if(grouped_df.shape[0] > 1):
+                a, b = map(list, zip(*combinations(grouped_df.index, 2)))
+
+                temp_df = pd.concat([grouped_df.loc[a].reset_index(drop = True), 
+                            grouped_df.loc[b].reset_index(drop = True)], keys = ['a', 'b'], axis=1)
+
+                temp_df.drop(temp_df.columns[[0, 4, 5]], axis=1, inplace=True)
+
+                final_df = pd.concat([final_df.reset_index(drop=True), temp_df.reset_index(drop=True)])
+
+            else:
+                grouped_df.drop(grouped_df.columns[[0]], axis=1, inplace=True)
+                grouped_df["edit2"] = ""
+                grouped_df["meanGrade2"] = ""
+                no_combine_df = pd.concat([no_combine_df.reset_index(drop=True), grouped_df.reset_index(drop=True)])
+
+        final_df.columns = ['original', 'edit1', 'meanGrade1', 'edit2', 'meanGrade2']
+        no_combine_df.columns = ['original', 'edit1', 'meanGrade1', 'edit2', 'meanGrade2']
+
+        final_df = pd.concat([final_df.reset_index(drop=True), no_combine_df.reset_index(drop=True)])
+
+        print(final_df.info())
+            
+        final_df.to_csv('subtask-1/combined-test.csv', index=False)
+
 
 
 dataLoader = DataLoader()
+dataLoader.makeCombinationOfEdits()
 
 
 
