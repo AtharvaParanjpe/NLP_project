@@ -14,21 +14,23 @@ class Subtask2_Model(tf.keras.Model):
     def __init__(self):
         super(Subtask2_Model, self).__init__()
         self.bert_layer = TFBertModel.from_pretrained('bert-base-uncased')
-        self.dense_layer2= tf.keras.layers.Dense(128, activation="sigmoid",dtype='float32')
+        self.dense_layer2= tf.keras.layers.Dense(256, activation="sigmoid",dtype='float32')
         self.dense_layer1 = tf.keras.layers.Dense(2, activation="sigmoid",dtype='float32')
+        self.dropout = tf.keras.layers.Dropout(0.2)
 
     def __call__(self, x_train):
         intermediate = self.bert_layer(x_train)
-        output1 = self.dense_layer2(intermediate[1])
+        intermediate2 = self.dropout(intermediate[1])
+        output1 = self.dense_layer2(intermediate2)
         output2 = self.dense_layer1(output1)
         return output2
 
-maxLengthPadding = 80
+maxLengthPadding = 160
 
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
 model = Subtask2_Model()
-optimizer = tf.keras.optimizers.Adam( learning_rate=0.0001)
+optimizer = tf.keras.optimizers.Adam( learning_rate=0.001)
 
 def get_bert_params(tokens):
     attn_mask = []
@@ -58,7 +60,7 @@ def training(train_data):
 
 
     for index, row in train_data.iterrows():
-        in_id1 = tokenizer.encode(row['edit1'], row["edit2"], add_special_tokens=True)
+        in_id1 = tokenizer.encode(row['original'] + ' ' + row['edit1'], row['original'] + ' ' + row["edit2"], add_special_tokens=True)
         attn1,seg1 = get_bert_params(tokenizer.convert_ids_to_tokens(in_id1))
         in_id1 += [0]*(maxLengthPadding-len(in_id1))
         input_ids.append(in_id1)
@@ -84,7 +86,7 @@ def training(train_data):
         # beforeThreshold = tf.math.subtract(targets,output)
         
         result = tf.math.subtract(targets,output)
-        squaredError = tf.math.square(result)
+        squaredError = tf.math.abs(result)
         
         loss = tf.math.reduce_mean(tf.math.reduce_sum(squaredError, axis=1))#,squaredError.shape[0])
     
@@ -99,7 +101,7 @@ def testing(test_data):
     correct = 0
     targets = []
     for index, row in test_data.iterrows():
-        in_id1 = tokenizer.encode(row['edit1'], row["edit2"], add_special_tokens=True)
+        in_id1 = tokenizer.encode(row['original'] + ' ' + row['edit1'], row['original'] + ' ' + row["edit2"], add_special_tokens=True)
         attn1,seg1 = get_bert_params(tokenizer.convert_ids_to_tokens(in_id1))
         in_id1 += [0]*(maxLengthPadding-len(in_id1))
 
@@ -121,10 +123,10 @@ def testing(test_data):
         #     else:
         #         currentVal = 1  
         
-        if(output[0][0]-output[0][1]<-0.0001):
-            output = 2
-        elif(output[0][0]-output[0][1]>0.0001):
+        if(output[0][0]-output[0][1]<-0.000001):
             output = 1
+        elif(output[0][0]-output[0][1]>0.000001):
+            output = 2
         else:
             output = 0  
         
