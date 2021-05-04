@@ -15,13 +15,15 @@ class Subtask1_Model(tf.keras.Model):
         super(Subtask1_Model, self).__init__()
         self.bert_layer = TFBertModel.from_pretrained('bert-base-uncased')
         # self.dense_layer3 = tf.keras.layers.Dense(256, activation="sigmoid",dtype='float32')
-        self.dense_layer2= tf.keras.layers.Dense(128, activation="sigmoid",dtype='float32')
+        self.dense_layer2= tf.keras.layers.Dense(256, activation="sigmoid",dtype='float32')
+#         self.dense_layer2= tf.keras.layers.Dense(128, activation="sigmoid",dtype='float32')
         self.dense_layer1 = tf.keras.layers.Dense(1, activation="sigmoid",dtype='float32')
-
+        self.dropout = tf.keras.layers.Dropout(0.4)
 
     def __call__(self, x_train):
         intermediate = self.bert_layer(x_train)
-        output1 = self.dense_layer2(intermediate[1])
+        intermediate2 = self.dropout(intermediate[1])
+        output1 = self.dense_layer2(intermediate2)
         output2 = self.dense_layer1(output1)
         return output2
 
@@ -154,9 +156,9 @@ def testing(test_data):
         #     else:
         #         currentVal = 1  
         
-        if(output1-output2<-0.1):
+        if(output1-output2<-0.00001):
             output = 2
-        elif(output1-output2>0.1):
+        elif(output1-output2>0.00001):
             output = 1
         else:
             output = 0  
