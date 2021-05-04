@@ -7,8 +7,8 @@ import math
 
 dev = pd.read_csv("subtask-1/modified-dev.csv")
 train = pd.read_csv("subtask-1/modified-train.csv")
-test = pd.read_csv("subtask-1/modified-test.csv")
-
+# test = pd.read_csv("subtask-1/modified-test.csv")
+test = pd.read_csv("subtask-2/modified-test.csv")
 
 class Subtask1_Model(tf.keras.Model):
     def __init__(self):
@@ -91,23 +91,82 @@ def training(train_data):
     return loss
 
 
+# def testing(test_data):
+#     loss = 0
+#     input_dictionary = {}
+    
+#     for index, row in test_data.iterrows():
+#         in_id1 = tokenizer.encode(row['original'], row["edit"], add_special_tokens=True)
+#         attn1,seg1 = get_bert_params(tokenizer.convert_ids_to_tokens(in_id1))
+#         in_id1 += [0]*(maxLengthPadding-len(in_id1))
+
+#         input_dictionary['input_ids'] = tf.convert_to_tensor(np.array(in_id1))[None,:]
+#         input_dictionary['attention_mask'] = tf.convert_to_tensor(np.array(attn1))[None,:]
+#         input_dictionary['token_type_ids'] = tf.convert_to_tensor(np.array(seg1))[None,:]
+#         output = model(input_dictionary)
+#         loss+= (output*3-row["meanGrade"])**2
+#         if(index%500==0):
+#             print(loss)
+#     return math.sqrt(loss/test_data.shape[0])
+
 def testing(test_data):
     loss = 0
     input_dictionary = {}
-    
+    correct = 0
+    targets = []
     for index, row in test_data.iterrows():
-        in_id1 = tokenizer.encode(row['original'], row["edit"], add_special_tokens=True)
+        in_id1 = tokenizer.encode(row['original'], row["edit1"], add_special_tokens=True)
         attn1,seg1 = get_bert_params(tokenizer.convert_ids_to_tokens(in_id1))
         in_id1 += [0]*(maxLengthPadding-len(in_id1))
+
+        # targets = [row["meanGrade1"], row["meanGrade2"]]
 
         input_dictionary['input_ids'] = tf.convert_to_tensor(np.array(in_id1))[None,:]
         input_dictionary['attention_mask'] = tf.convert_to_tensor(np.array(attn1))[None,:]
         input_dictionary['token_type_ids'] = tf.convert_to_tensor(np.array(seg1))[None,:]
-        output = model(input_dictionary)
-        loss+= (output*3-row["meanGrade"])**2
-        if(index%500==0):
-            print(loss)
-    return math.sqrt(loss/test_data.shape[0])
+        output1 = model(input_dictionary)
+        output1 = output1*3
+        
+        
+        
+        
+        in_id1 = tokenizer.encode(row['original'], row["edit2"], add_special_tokens=True)
+        attn1,seg1 = get_bert_params(tokenizer.convert_ids_to_tokens(in_id1))
+        in_id1 += [0]*(maxLengthPadding-len(in_id1))
+
+        # targets = [row["meanGrade1"], row["meanGrade2"]]
+
+        input_dictionary['input_ids'] = tf.convert_to_tensor(np.array(in_id1))[None,:]
+        input_dictionary['attention_mask'] = tf.convert_to_tensor(np.array(attn1))[None,:]
+        input_dictionary['token_type_ids'] = tf.convert_to_tensor(np.array(seg1))[None,:]
+        output2 = model(input_dictionary)
+        output2 = output2*3
+        
+        
+        # print(output)
+        # print(output.shape)
+        # for x in output:
+        #     currentVal = 0
+        #     if(x<0.66):
+        #         currentVal = 0
+        #     elif(x>1.33):
+        #         currentVal = 2
+        #     else:
+        #         currentVal = 1  
+        
+        if(output1-output2<-0.1):
+            output = 2
+        elif(output1-output2>0.1):
+            output = 1
+        else:
+            output = 0  
+        
+        if(output==row['label']):
+            correct+=1
+
+        if(index>0 and index%500==0):
+            print("Accuracy: ", float(correct/index))
+    return float(correct/test_data.shape[0])
 
 
 # training()
