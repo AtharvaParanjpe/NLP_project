@@ -238,7 +238,7 @@ EPOCHS = 10
 
 for e in range(10):
     loss = 0
-    for i in range(1):
+    for i in range(num_batches-1):
         index = i*batch_size
         curr_batch = train[index:index+batch_size]
         loss = training(curr_batch)
