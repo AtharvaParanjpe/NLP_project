@@ -15,17 +15,24 @@ class Subtask1_Model(tf.keras.Model):
         super(Subtask1_Model, self).__init__()
         self.bert_layer = TFBertModel.from_pretrained('bert-base-uncased')
         # self.dense_layer3 = tf.keras.layers.Dense(256, activation="sigmoid",dtype='float32')
-        self.dense_layer2= tf.keras.layers.Dense(256, activation="sigmoid",dtype='float32')
+        self.dense_layer2= tf.keras.layers.Dense(256, activation="sigmoid",dtype='float32',
+                                                kernel_regularizer=tf.keras.regularizers.l2(0.01))
 #         self.dense_layer2= tf.keras.layers.Dense(128, activation="sigmoid",dtype='float32')
         self.dense_layer1 = tf.keras.layers.Dense(1, activation="sigmoid",dtype='float32')
         self.dropout = tf.keras.layers.Dropout(0.4)
 
     def __call__(self, x_train):
         intermediate = self.bert_layer(x_train)
-        intermediate2 = self.dropout(intermediate[1])
-        output1 = self.dense_layer2(intermediate2)
+#         intermediate2 = self.dropout(intermediate[1])
+#         output1 = self.dense_layer2(intermediate2)
+#         output2 = self.dense_layer1(output1)
+        intermediate2 = self.dense_layer2(intermediate[1])
+        output1 = self.dropout(intermediate2)
         output2 = self.dense_layer1(output1)
+        
         return output2
+    
+        
 
 
 maxLengthPadding = 80
@@ -156,9 +163,9 @@ def testing(test_data):
         #     else:
         #         currentVal = 1  
         
-        if(output1-output2<-0.00001):
+        if(output1-output2<-0.0001):
             output = 2
-        elif(output1-output2>0.00001):
+        elif(output1-output2>0.0001):
             output = 1
         else:
             output = 0  
@@ -173,7 +180,7 @@ def testing(test_data):
 
 # training()
 
-batch_size = 32
+batch_size = 64
 num_batches = math.floor(train.shape[0]/batch_size)
 print(num_batches)
 EPOCHS = 10
