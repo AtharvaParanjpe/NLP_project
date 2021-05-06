@@ -33,8 +33,11 @@ class DataLoader():
             original = "".join(original)
             edited = [split[0], row["edit"], split[1][1]]
             edited = "".join(edited)
+            context = [split[0], split[1][1]]
+            context = "".join(context)
             file.loc[index, "edit"] = edited
             file.loc[index, "original"] = original
+            file.loc[index, "context"] = context
         return file
 
     def replaceEditForTask2(self, file):
@@ -48,6 +51,8 @@ class DataLoader():
             original = "".join(original)
             edited = [split[0], row["edit1"], split[1][1]]
             edited = "".join(edited)
+            context = [split[0], split[1][1]]
+            context = "".join(context)
             file.loc[index, "edit1"] = edited
             file.loc[index, "original1"] = original
 
@@ -62,17 +67,18 @@ class DataLoader():
             file.loc[index, "original2"] = original
             
             file.loc[index, "original"] = original
+            file.loc[index, "context"] = context
             
         return file
 
     def clean_data_for_tasks(self):
-        # self.train1 = self.replaceEditForTask1(self.train1)
-        # self.test1 = self.replaceEditForTask1(self.test1)
-        # self.dev1 = self.replaceEditForTask1(self.dev1)
+        self.train1 = self.replaceEditForTask1(self.train1)
+        self.test1 = self.replaceEditForTask1(self.test1)
+        self.dev1 = self.replaceEditForTask1(self.dev1)
 
-        # self.train1.to_csv("./subtask-1/modified-train.csv")
-        # self.test1.to_csv("./subtask-1/modified-test.csv")
-        # self.dev1.to_csv("./subtask-1/modified-dev.csv")
+        self.train1.to_csv("./subtask-1/modified-train.csv")
+        self.test1.to_csv("./subtask-1/modified-test.csv")
+        self.dev1.to_csv("./subtask-1/modified-dev.csv")
 
         self.train2 = self.replaceEditForTask2(self.train2)
         self.test2 = self.replaceEditForTask2(self.test2)
@@ -122,7 +128,7 @@ class DataLoader():
 
 
 dataLoader = DataLoader()
-dataLoader.makeCombinationOfEdits()
+# dataLoader.makeCombinationOfEdits()
 
 
 
