@@ -6,8 +6,9 @@ import math
 
 
 dev = pd.read_csv("subtask-2/modified-dev.csv")
-train = pd.read_csv("subtask-2/modified-train.csv")
-test = pd.read_csv("subtask-2/modified-test.csv")
+train = pd.read_csv("subtask-1/combined-train.csv")
+train = train.dropna()
+test = pd.read_csv("subtask-1/combined-test.csv")
 
 class Subtask1_Model(tf.keras.Model):
     def __init__(self):
@@ -131,6 +132,7 @@ def testing(test_data):
     input_dictionary3 = {}
     correct = 0
     targets = []
+    toberemoved = 0
     for index, row in test_data.iterrows():
         in_id1 = tokenizer.encode(row['original'], add_special_tokens=True)
         attn1,seg1 = get_bert_params(tokenizer.convert_ids_to_tokens(in_id1))
@@ -148,32 +150,29 @@ def testing(test_data):
         input_dictionary2['attention_mask'] = tf.convert_to_tensor(np.array(attn1))[None,:]
         input_dictionary2['token_type_ids'] = tf.convert_to_tensor(np.array(seg1))[None,:]
                 
-        in_id1 = tokenizer.encode(row["edit2"], add_special_tokens=True)
-        attn1,seg1 = get_bert_params(tokenizer.convert_ids_to_tokens(in_id1))
-        in_id1 += [0]*(maxLengthPadding-len(in_id1))
-
-        input_dictionary3['input_ids'] = tf.convert_to_tensor(np.array(in_id1))[None,:]
-        input_dictionary3['attention_mask'] = tf.convert_to_tensor(np.array(attn1))[None,:]
-        input_dictionary3['token_type_ids'] = tf.convert_to_tensor(np.array(seg1))[None,:]
-
         output1 = model(input_dictionary1, input_dictionary2)
-        output2 = model(input_dictionary1, input_dictionary3)
         
-        output1 = output1*3
-        output2 = output2*3
-        if(output1-output2<-0.0001):
-            output = 2
-        elif(output1-output2>0.0001):
-            output = 1
-        else:
-            output = 0  
+        loss+= (output1*3-row["meanGrade1"])**2
         
-        if(output==row['label']):
-            correct+=1
+        if None != row["edit2"]:
+            in_id1 = tokenizer.encode(row["edit2"], add_special_tokens=True)
+            attn1,seg1 = get_bert_params(tokenizer.convert_ids_to_tokens(in_id1))
+            in_id1 += [0]*(maxLengthPadding-len(in_id1))
 
+            input_dictionary3['input_ids'] = tf.convert_to_tensor(np.array(in_id1))[None,:]
+            input_dictionary3['attention_mask'] = tf.convert_to_tensor(np.array(attn1))[None,:]
+            input_dictionary3['token_type_ids'] = tf.convert_to_tensor(np.array(seg1))[None,:]
+
+            output2 = model(input_dictionary1, input_dictionary3)
+        
+            loss+= (output2*3-row["meanGrade2"])**2
+            
+        else:
+            toberemoved += 1
+        
         if(index>0 and index%500==0):
-            print("Accuracy: ", float(correct/index))
-    return float(correct/test_data.shape[0])
+            print("Accuracy: ", float(correct/(2*index - toberemoved)))
+    return float(correct/(2*test_data.shape[0] - toberemoved))
 
 
 # training()
